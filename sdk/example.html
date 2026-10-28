@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Builder Connect - embed example</title>
+<style>
+  body {
+    margin: 0; padding: 40px 20px; background: #f6f8fb; color: #0f172a;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  .shell { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  p.lede { color: #475569; margin: 0 0 24px; }
+  .panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 22px; }
+  .api-row { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+  input[type="url"] {
+    flex: 1 1 260px; padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 8px;
+    font: inherit; font-size: 14px;
+  }
+  button {
+    padding: 9px 16px; font: inherit; font-weight: 600; border-radius: 8px;
+    border: 1px solid #cbd5e1; background: #fff; cursor: pointer;
+  }
+  #log { margin-top: 18px; font-size: 12.5px; color: #64748b; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <h1>Resume Builder Connect</h1>
+  <p class="lede">
+    This page is a plain HTML file. It loads the connector, mounts the widget, and lets you
+    collect resume details from any visitor and hand them a PDF - with no backend on this site.
+  </p>
+
+  <div class="panel">
+    <div class="api-row">
+      <label for="base">API base URL</label>
+      <input type="url" id="base" value="http://localhost:3000">
+      <button id="reload">Reload widget</button>
+    </div>
+    <div id="resume-widget"></div>
+    <div id="log"></div>
+  </div>
+</div>
+
+<script src="resume-builder-connect.js"></script>
+<script>
+  var logEl = document.getElementById('log');
+  var widgetEl = document.getElementById('resume-widget');
+  var current = null;
+
+  function log(message) {
+    logEl.textContent = message + '\n' + logEl.textContent;
+  }
+
+  function build() {
+    var baseUrl = document.getElementById('base').value.trim() || 'http://localhost:3000';
+    current = ResumeBuilderConnect.init({ baseUrl: baseUrl, template: 'classic' });
+
+    current.mount(widgetEl, {
+      template: 'classic',
+      buttonLabel: 'Download my resume',
+      onSuccess: function (result) {
+        log('Saved ' + result.filename + ' (' + Math.round(result.blob.size / 1024) + ' KB)');
+      },
+      onError: function (err) {
+        log('Error: ' + err.message);
+      }
+    });
+
+    current.templates()
+      .then(function (list) { log('Connected. ' + list.length + ' templates available.'); })
+      .catch(function (err) { log('Could not reach the API: ' + err.message); });
+  }
+
+  document.getElementById('reload').addEventListener('click', build);
+  build();
+</script>
+</body>
+</html>
