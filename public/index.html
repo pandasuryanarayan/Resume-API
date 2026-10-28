@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Builder API - docs and playground</title>
+<link rel="stylesheet" href="/docs.css">
+<script src="/docs.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="badge" id="mode-badge">checking mode...</span>
+    <h1>Resume Builder API</h1>
+    <p class="lede">
+      Post resume data as JSON, get a print-ready A4 PDF back. The PDF is rendered by the exact
+      templates the Resume Builder website uses, so anything a visitor downloads from the site and
+      anything your integration generates look the same.
+    </p>
+  </header>
+
+  <h2>Quick start</h2>
+  <p>
+    Send a POST to <code class="inline">/v1/resumes/pdf</code> with a JSON body and the response is
+    the PDF itself. A ready-to-run shell example is in <code class="inline">README.md</code>.
+  </p>
+  <pre><span class="c"># request</span>
+POST /v1/resumes/pdf
+Content-Type: application/json
+
+{ <span class="s">"fullName"</span>: <span class="s">"Suryanarayan Panda"</span>, <span class="s">"email"</span>: <span class="s">"you@example.com"</span>, <span class="s">"template"</span>: <span class="s">"modern"</span> }
+
+<span class="c"># response</span>
+200 OK
+Content-Type: application/pdf
+Content-Disposition: attachment; filename=<span class="s">"Suryanarayan_Panda_Resume.pdf"</span></pre>
+
+  <h2>Endpoints</h2>
+  <div class="card">
+    <div class="route"><span class="verb">GET</span><span class="path mono">/v1/health</span><span class="desc">Liveness probe.</span></div>
+    <div class="route"><span class="verb">GET</span><span class="path mono">/v1/templates</span><span class="desc">All template ids, names and categories.</span></div>
+    <div class="route"><span class="verb">GET</span><span class="path mono">/v1/schema</span><span class="desc">JSON Schema for the payload.</span></div>
+    <div class="route"><span class="verb">GET</span><span class="path mono">/v1/openapi.json</span><span class="desc">OpenAPI 3.0 document, for code generators.</span></div>
+    <div class="route"><span class="verb post">POST</span><span class="path mono">/v1/validate</span><span class="desc">Normalise and validate without rendering.</span></div>
+    <div class="route"><span class="verb post">POST</span><span class="path mono">/v1/resumes/preview</span><span class="desc">HTML preview. Add <code class="inline">?full=1</code> for a standalone page.</span></div>
+    <div class="route"><span class="verb post">POST</span><span class="path mono">/v1/resumes/pdf</span><span class="desc">The PDF. <code class="inline">?format=base64</code> returns JSON instead of bytes.</span></div>
+  </div>
+
+  <h2>Playground</h2>
+  <div class="grid two">
+    <div class="card">
+      <div class="row">
+        <label for="template">Template</label>
+        <select id="template"></select>
+        <button class="primary" id="btn-pdf">Download PDF</button>
+        <button id="btn-preview">Preview</button>
+        <button id="btn-validate">Validate</button>
+      </div>
+      <textarea id="payload" spellcheck="false"></textarea>
+      <div class="status" id="status"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Live preview</h3>
+      <iframe id="preview" title="Resume preview" src="about:blank"></iframe>
+    </div>
+  </div>
+
+  <h2>Payload</h2>
+  <p>
+    Only <code class="inline">fullName</code> and <code class="inline">email</code> are required; every other field is
+    optional and simply omitted from the document when empty. Common aliases are accepted -
+    <code class="inline">name</code>, <code class="inline">objective</code>, <code class="inline">experience</code>,
+    <code class="inline">education</code> - so an existing form usually maps across without changes.
+  </p>
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><code>fullName</code></td><td>string</td><td>Required, up to 120 characters.</td></tr>
+      <tr><td><code>email</code></td><td>string</td><td>Required, must look like an address.</td></tr>
+      <tr><td><code>phone</code></td><td>string</td><td>Digits, spaces, + ( ) - only.</td></tr>
+      <tr><td><code>address</code>, <code>linkedin</code>, <code>github</code>, <code>languages</code></td><td>string</td><td>Printed in the contact block.</td></tr>
+      <tr><td><code>summary</code></td><td>string</td><td>Career objective or professional summary.</td></tr>
+      <tr><td><code>qualifications</code></td><td>array</td><td>Up to 20 of <code>{degree, university, year, score, status}</code>.</td></tr>
+      <tr><td><code>edu_12th_*</code>, <code>edu_10th_*</code></td><td>string</td><td>School, board, stream, year, score.</td></tr>
+      <tr><td><code>workExperience</code>, <code>projects</code>, <code>skills</code>, <code>certifications</code>, <code>actHob</code></td><td>string or array</td><td>Arrays are joined with commas.</td></tr>
+      <tr><td><code>template</code></td><td>string</td><td>Any id from <code>/v1/templates</code>.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Embed it on your site</h2>
+  <p>
+    <code class="inline">sdk/resume-builder-connect.js</code> is a dependency-free browser connector.
+    Drop it in, point it at this API, and either call it directly or mount the ready-made form.
+  </p>
+  <pre><span class="k">&lt;script</span> src=<span class="s">"resume-builder-connect.js"</span><span class="k">&gt;&lt;/script&gt;</span>
+<span class="k">&lt;script&gt;</span>
+  <span class="k">const</span> rb = ResumeBuilderConnect.init({ baseUrl: <span class="s">'https://your-api.example.com'</span>, apiKey: <span class="s">'optional'</span> });
+
+  <span class="c">// 1. Mount a form that collects details and downloads the PDF</span>
+  rb.mount(<span class="s">'#resume-widget'</span>, { template: <span class="s">'modern'</span> });
+
+  <span class="c">// 2. Or drive it from your own UI</span>
+  <span class="k">await</span> rb.downloadPDF({ fullName: <span class="s">'Asha Rao'</span>, email: <span class="s">'asha@example.com'</span> }, { template: <span class="s">'classic'</span> });
+<span class="k">&lt;/script&gt;</span></pre>
+
+  <footer>
+    <span id="footer-mode"></span> | <a href="/v1/openapi.json">OpenAPI</a>
+  </footer>
+</div>
+</body>
+</html>
