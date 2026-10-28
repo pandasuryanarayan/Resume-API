@@ -1,0 +1,27 @@
+{
+  "name": "resume-api",
+  "version": "1.0.0",
+  "description": "Public REST API that renders print-ready A4 resume PDFs from JSON, plus a drop-in browser connector for embedding the builder on any website.",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test test/"
+  },
+  "keywords": [
+    "resume",
+    "cv",
+    "pdf",
+    "api",
+    "connector",
+    "jspdf"
+  ],
+  "dependencies": {
+    "express": "^4.19.2",
+    "jspdf": "2.5.1"
+  },
+  "license": "Apache-2.0"
+}
